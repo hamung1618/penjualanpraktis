@@ -18,7 +18,6 @@
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
         .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .metric, .sales-card { background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .sales-row { display: flex; justify-content: space-between; font-size: 11px; }
         .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; border: 1px solid #e2e8f0; }
         .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 10px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
@@ -63,19 +62,30 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        const firebaseConfig = { /* PASTE CONFIG FIREBASE ANDA DI SINI */ };
-        const db = getDatabase(initializeApp(firebaseConfig));
+        // KONFIGURASI FIREBASE ANDA
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6nSBFiYD7gsjl73vA_iW4xCGgwfrpVJY",
+            authDomain: "gajahmasprofit.firebaseapp.com",
+            databaseURL: "https://gajahmasprofit-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "gajahmasprofit",
+            storageBucket: "gajahmasprofit.appspot.com",
+            messagingSenderId: "786234727258",
+            appId: "1:786234727258:web:6a63396c202b5edb993163"
+        };
 
-        window.pA = (s) => parseFloat(s.toString().replace(/[^0-9.-]+/g, '')) || 0;
-        
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Fungsi Hitung
         window.hitung = () => {
             let tC=0, tT=0, pc=0, pt=0;
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 if (r.style.display === 'none') return;
                 const c = r.getElementsByTagName('td');
                 if(c.length < 12) return;
-                const n = pA(c[9].innerText), p = pA(c[11].innerText), isT = c[10].innerText.includes('Kredit');
-                if(isT) { tT += n; pt += p; } else { tC += n; pc += p; }
+                let n = parseFloat(c[9].innerText.replace(/[^0-9.-]+/g,'')) || 0;
+                let p = parseFloat(c[11].innerText.replace(/[^0-9.-]+/g,'')) || 0;
+                if(c[10].innerText.includes('Kredit')) { tT += n; pt += p; } else { tC += n; pc += p; }
             });
             document.getElementById('tot-cash').innerText = 'Rp ' + tC.toLocaleString();
             document.getElementById('tot-tempo').innerText = 'Rp ' + tT.toLocaleString();
@@ -83,75 +93,40 @@
             document.getElementById('tot-p-tempo').innerText = 'Rp ' + pt.toLocaleString();
         };
 
+        // Fungsi Filter
         window.applyFilter = () => {
             const t = document.getElementById('filterTgl').value, s = document.getElementById('filterSales').value;
             document.querySelectorAll('#tableBody tr').forEach(r => {
-                let d = r.cells[1].innerText.split('/');
-                let iso = d.length == 3 ? `20${d[2]}-${d[1].padStart(2,'0')}-${d[0].padStart(2,'0')}` : "";
-                r.style.display = ((s==""||r.cells[0].innerText.trim()==s) && (t==""||iso==t)) ? "" : "none";
+                r.style.display = ((s==""||r.cells[0].innerText.trim()==s) && (t==""||r.cells[1].innerText.includes(t))) ? "" : "none";
             });
-            hitung();
+            window.hitung();
         };
 
-        window.edit = (b) => {
-            const r = b.closest('tr');
-            if(r.contentEditable == "true") { 
-                r.contentEditable="false"; b.innerText="Edit"; 
-                set(ref(db, 'data'), { html: document.getElementById('tableBody').innerHTML }); 
-            } else { r.contentEditable="true"; b.innerText="Simpan"; }
+        // Simpan ke Firebase
+        window.saveToCloud = () => {
+            set(ref(db, 'penjualan/data'), { html: document.getElementById('tableBody').innerHTML });
         };
 
-        window.del = (b) => { 
-            b.closest('tr').remove(); 
-            set(ref(db, 'data'), { html: document.getElementById('tableBody').innerHTML }); 
-        };
+        // Ambil dari Firebase
+        onValue(ref(db, 'penjualan/data'), (snapshot) => {
+            if (snapshot.val()) {
+                document.getElementById('tableBody').innerHTML = snapshot.val().html;
+                window.hitung();
+            }
+        });
 
+        // Upload CSV
         document.getElementById('fileInput').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (evt) => {
-                const html = evt.target.result.split('\n').slice(1).filter(l=>l).map(l => `<tr>${l.replace(/"/g,'').split(',').map(v=>`<td>${v}</td>`).join('')}<td><button onclick="window.edit(this)">Edit</button><button onclick="window.del(this)">Hapus</button></td></tr>`).join('');
-                document.getElementById('tableBody').innerHTML = html;
-                set(ref(db, 'data'), { html: html });
-                hitung();
+                const rows = evt.target.result.split('\n').slice(1);
+                document.getElementById('tableBody').innerHTML = rows.map(r => `<tr>${r.split(',').map(c => `<td>${c}</td>`).join('')}<td><button onclick="window.del(this)">Hapus</button></td></tr>`).join('');
+                window.saveToCloud();
             };
             reader.readAsText(e.target.files[0]);
         };
 
-        onValue(ref(db, 'data'), (s) => { 
-            if(s.val()) { document.getElementById('tableBody').innerHTML = s.val().html; hitung(); } 
-        });
+        window.del = (btn) => { btn.closest('tr').remove(); window.saveToCloud(); };
     </script>
-    <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyA6nSBFiYD7gsjl73vA_iW4xCGgwfrpVJY",
-        authDomain: "gajahmasprofit.firebaseapp.com",
-        databaseURL: "https://gajahmasprofit-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "gajahmasprofit",
-        storageBucket: "gajahmasprofit.appspot.com",
-        messagingSenderId: "786234727258",
-        appId: "1:786234727258:web:6a63396c202b5edb993163"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // MENGAMBIL DATA (Sinkronisasi otomatis saat HP dibuka)
-    onValue(ref(db, 'penjualan/data'), (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            document.getElementById('tableBody').innerHTML = data.html;
-            if(typeof hitung === 'function') hitung(); // Menjalankan fungsi hitung Anda
-        }
-    });
-
-    // MENGIRIM DATA (Panggil fungsi ini setelah Anda upload/edit/hapus)
-    window.saveToCloud = () => {
-        const htmlContent = document.getElementById('tableBody').innerHTML;
-        set(ref(db, 'penjualan/data'), { html: htmlContent });
-    };
-</script>
 </body>
 </html>
