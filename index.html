@@ -12,6 +12,10 @@
         .metric { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
         .metric small { display: block; font-size: 11px; color: #64748b; }
         .metric strong { font-size: 16px; color: #0f172a; }
+        .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .sales-card { background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .sales-name { font-weight: 600; font-size: 12px; margin-bottom: 8px; border-bottom: 1px solid #eee; }
+        .sales-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; }
         .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; border: 1px solid #e2e8f0; align-items: center; }
         .btn-filter { background: #059669; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; }
         .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 15px; overflow-x: auto; }
@@ -37,8 +41,18 @@
             <div class="metric"><small>Profit Tempo</small><strong id="tot-p-tempo">Rp 0</strong></div>
         </div>
 
+        <div class="sales-grid">
+            <div class="sales-card"><div class="sales-name">RAJU</div><div class="sales-row"><span>Cash:</span><span id="v-RAJU-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-RAJU-tempo">0</span></div><div class="sales-row"><span>Profit Cash:</span><span id="v-RAJU-pc">0</span></div><div class="sales-row"><span>Profit Tempo:</span><span id="v-RAJU-pt">0</span></div></div>
+            <div class="sales-card"><div class="sales-name">HAFID</div><div class="sales-row"><span>Cash:</span><span id="v-HAFID-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-HAFID-tempo">0</span></div><div class="sales-row"><span>Profit Cash:</span><span id="v-HAFID-pc">0</span></div><div class="sales-row"><span>Profit Tempo:</span><span id="v-HAFID-pt">0</span></div></div>
+            <div class="sales-card"><div class="sales-name">JOSSY</div><div class="sales-row"><span>Cash:</span><span id="v-JOSSY-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-JOSSY-tempo">0</span></div><div class="sales-row"><span>Profit Cash:</span><span id="v-JOSSY-pc">0</span></div><div class="sales-row"><span>Profit Tempo:</span><span id="v-JOSSY-pt">0</span></div></div>
+        </div>
+
         <div class="filter-bar">
             <input type="date" id="filterTgl">
+            <select id="filterSales">
+                <option value="">Semua Sales</option><option value="RAJU">RAJU</option><option value="HAFID">HAFID</option><option value="JOSSY">JOSSY</option>
+            </select>
+            <input type="text" id="filterProduk" placeholder="Cari Produk...">
             <button class="btn-filter" onclick="applyFilter()">Terapkan Filter</button>
         </div>
 
@@ -52,15 +66,21 @@
 
     <script>
         function hitungUlang() {
+            document.querySelectorAll('[id^="v-"]').forEach(el => el.innerText = '0');
             let tC=0, tT=0, tpC=0, tpT=0;
             const rows = document.querySelectorAll('#tableBody tr');
             rows.forEach(row => {
                 if (row.style.display !== 'none') {
                     const c = row.getElementsByTagName('td');
+                    const s = c[0].innerText.trim();
                     const n = parseFloat(c[9].innerText.replace(/,/g,'')) || 0;
                     const p = parseFloat(c[11].innerText.replace(/,/g,'')) || 0;
                     const isT = c[10].innerText.trim().toLowerCase() === 'kredit';
                     if(isT) { tT += n; tpT += p; } else { tC += n; tpC += p; }
+                    const elN = document.getElementById(`v-${s}-${isT?'tempo':'cash'}`);
+                    const eP = document.getElementById(`v-${s}-${isT?'pt':'pc'}`);
+                    if(elN) elN.innerText = (parseFloat(elN.innerText.replace(/,/g,'')) + n).toLocaleString();
+                    if(eP) eP.innerText = (parseFloat(eP.innerText.replace(/,/g,'')) + p).toLocaleString();
                 }
             });
             document.getElementById('tot-cash').innerText = 'Rp ' + tC.toLocaleString();
@@ -71,6 +91,8 @@
 
         function applyFilter() {
             const vTgl = document.getElementById('filterTgl').value;
+            const vSales = document.getElementById('filterSales').value;
+            const vProd = document.getElementById('filterProduk').value.toLowerCase();
             const rows = document.querySelectorAll('#tableBody tr');
             rows.forEach(r => {
                 const tglData = r.cells[1].innerText.trim().split(' ')[0];
@@ -78,7 +100,7 @@
                 if(p.length === 3) {
                     const thn = p[2].length === 2 ? "20" + p[2] : p[2];
                     const formattedData = thn + "-" + p[1].padStart(2, '0') + "-" + p[0].padStart(2, '0');
-                    r.style.display = (vTgl === "" || formattedData === vTgl) ? "" : "none";
+                    r.style.display = (vSales==""||r.cells[0].innerText.trim()==vSales) && (vTgl==""||formattedData==vTgl) && (r.cells[3].innerText.toLowerCase().includes(vProd)) ? "" : "none";
                 }
             });
             hitungUlang();
