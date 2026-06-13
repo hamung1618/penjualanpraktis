@@ -66,6 +66,12 @@
     </div>
 
     <script>
+        // Pembersih angka murni
+        function parseAngka(str) {
+            if (!str) return 0;
+            return parseFloat(str.toString().replace(/[^0-9]/g, '')) || 0;
+        }
+
         function hitungUlang() {
             document.querySelectorAll('[id^="v-"]').forEach(el => el.innerText = '0');
             let tC=0, tT=0, tpC=0, tpT=0;
@@ -75,14 +81,14 @@
                     const c = row.getElementsByTagName('td');
                     if(c.length < 12) return;
                     const s = c[0].innerText.trim();
-                    const n = parseFloat(c[9].innerText.replace(/,/g,'')) || 0;
-                    const p = parseFloat(c[11].innerText.replace(/,/g,'')) || 0;
+                    const n = parseAngka(c[9].innerText);
+                    const p = parseAngka(c[11].innerText);
                     const isT = c[10].innerText.trim().toLowerCase() === 'kredit';
                     if(isT) { tT += n; tpT += p; } else { tC += n; tpC += p; }
                     const elN = document.getElementById(`v-${s}-${isT?'tempo':'cash'}`);
                     const eP = document.getElementById(`v-${s}-${isT?'pt':'pc'}`);
-                    if(elN) elN.innerText = (parseFloat(elN.innerText.replace(/,/g,'')) + n).toLocaleString();
-                    if(eP) eP.innerText = (parseFloat(eP.innerText.replace(/,/g,'')) + p).toLocaleString();
+                    if(elN) elN.innerText = (parseAngka(elN.innerText) + n).toLocaleString();
+                    if(eP) eP.innerText = (parseAngka(eP.innerText) + p).toLocaleString();
                 }
             });
             document.getElementById('tot-cash').innerText = 'Rp ' + tC.toLocaleString();
@@ -98,8 +104,8 @@
             const rows = document.querySelectorAll('#tableBody tr');
             rows.forEach(r => {
                 const datePart = r.cells[1].innerText.trim().split(' ')[0];
-                const pArr = datePart.split('/');
-                const tISO = pArr.length == 3 ? (pArr[2].length==2 ? "20"+pArr[2] : pArr[2]) + "-" + pArr[1].padStart(2,'0') + "-" + pArr[0].padStart(2,'0') : "";
+                const p = datePart.split('/');
+                const tISO = p.length == 3 ? (p[2].length==2 ? "20"+p[2] : p[2]) + "-" + p[1].padStart(2,'0') + "-" + p[0].padStart(2,'0') : "";
                 r.style.display = (vSales==""||r.cells[0].innerText.trim()==vSales) && (vTgl==""||tISO==vTgl) && (r.cells[3].innerText.toLowerCase().includes(vProd)) ? "" : "none";
             });
             hitungUlang();
