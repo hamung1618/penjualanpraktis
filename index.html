@@ -3,22 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gajah Mas Cloud Dashboard</title>
+    <title>Gajah Mas Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
         body { background: #f8fafc; display: flex; }
         .sidebar { width: 220px; height: 100vh; background: #0f172a; color: white; padding: 20px; position: fixed; }
         .main { margin-left: 220px; padding: 25px; width: calc(100% - 220px); }
+        
+        /* Responsif HP */
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .sidebar { width: 100%; height: auto; position: relative; padding: 15px; }
             .main { margin-left: 0; padding: 15px; width: 100%; }
             .summary-grid, .sales-grid { grid-template-columns: 1fr !important; }
         }
+
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
         .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .metric, .sales-card { background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .sales-row { display: flex; justify-content: space-between; font-size: 11px; }
+        .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; border: 1px solid #e2e8f0; }
         .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 10px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th, td { padding: 8px; border: 1px solid #e2e8f0; text-align: left; }
@@ -40,11 +43,19 @@
             <div class="metric"><small>P.Cash</small><div id="tot-p-cash">Rp 0</div></div>
             <div class="metric"><small>P.Tempo</small><div id="tot-p-tempo">Rp 0</div></div>
         </div>
+
         <div class="sales-grid">
-            <div class="sales-card"><b>RAJU</b><div class="sales-row"><span>Cash:</span><span id="v-RAJU-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-RAJU-tempo">0</span></div><div class="sales-row"><span>P.Cash:</span><span id="v-RAJU-pc">0</span></div><div class="sales-row"><span>P.Tempo:</span><span id="v-RAJU-pt">0</span></div></div>
-            <div class="sales-card"><b>HAFID</b><div class="sales-row"><span>Cash:</span><span id="v-HAFID-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-HAFID-tempo">0</span></div><div class="sales-row"><span>P.Cash:</span><span id="v-HAFID-pc">0</span></div><div class="sales-row"><span>P.Tempo:</span><span id="v-HAFID-pt">0</span></div></div>
-            <div class="sales-card"><b>JOSSY</b><div class="sales-row"><span>Cash:</span><span id="v-JOSSY-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-JOSSY-tempo">0</span></div><div class="sales-row"><span>P.Cash:</span><span id="v-JOSSY-pc">0</span></div><div class="sales-row"><span>P.Tempo:</span><span id="v-JOSSY-pt">0</span></div></div>
+            <div class="sales-card"><b>RAJU</b><div id="v-RAJU-data" style="font-size:10px;"></div></div>
+            <div class="sales-card"><b>HAFID</b><div id="v-HAFID-data" style="font-size:10px;"></div></div>
+            <div class="sales-card"><b>JOSSY</b><div id="v-JOSSY-data" style="font-size:10px;"></div></div>
         </div>
+
+        <div class="filter-bar">
+            <input type="date" id="filterTgl">
+            <select id="filterSales"><option value="">Semua Sales</option><option value="RAJU">RAJU</option><option value="HAFID">HAFID</option><option value="JOSSY">JOSSY</option></select>
+            <button onclick="applyFilter()">Terapkan Filter</button>
+        </div>
+
         <div class="table-container">
             <table id="mainTable">
                 <thead><tr><th>Sales</th><th>Tanggal</th><th>Faktur</th><th>Produk</th><th>Jml</th><th>Satuan</th><th>H.Beli</th><th>Disc</th><th>H.Jual</th><th>Nominal</th><th>Bayar</th><th>Profit</th><th>Aksi</th></tr></thead>
@@ -57,31 +68,20 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA6nSBFiYD7gsjl73vA_iW4xCGgwfrpVJY",
-            authDomain: "gajahmasprofit.firebaseapp.com",
-            databaseURL: "https://gajahmasprofit-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "gajahmasprofit",
-            storageBucket: "gajahmasprofit.appspot.com",
-            messagingSenderId: "786234727258",
-            appId: "1:786234727258:web:6a63396c202b5edb993163"
-        };
-
+        // Ganti dengan Config Firebase Anda
+        const firebaseConfig = { /* PASTE CONFIG ANDA DI SINI */ };
         const db = getDatabase(initializeApp(firebaseConfig));
 
         window.pA = (s) => parseFloat(s.toString().replace(/[^0-9.-]+/g, '')) || 0;
         
         window.hitung = () => {
-            document.querySelectorAll('[id^="v-"]').forEach(el => el.innerText = '0');
             let tC=0, tT=0, pc=0, pt=0;
             document.querySelectorAll('#tableBody tr').forEach(r => {
+                if (r.style.display === 'none') return;
                 const c = r.getElementsByTagName('td');
                 if(c.length < 12) return;
-                const s = c[0].innerText.trim(), n = pA(c[9].innerText), p = pA(c[11].innerText), isT = c[10].innerText.includes('Kredit');
+                const n = pA(c[9].innerText), p = pA(c[11].innerText), isT = c[10].innerText.includes('Kredit');
                 if(isT) { tT += n; pt += p; } else { tC += n; pc += p; }
-                const eN = document.getElementById(`v-${s}-${isT?'tempo':'cash'}`), eP = document.getElementById(`v-${s}-${isT?'pt':'pc'}`);
-                if(eN) eN.innerText = (pA(eN.innerText) + n).toLocaleString();
-                if(eP) eP.innerText = (pA(eP.innerText) + p).toLocaleString();
             });
             document.getElementById('tot-cash').innerText = 'Rp ' + tC.toLocaleString();
             document.getElementById('tot-tempo').innerText = 'Rp ' + tT.toLocaleString();
@@ -89,28 +89,17 @@
             document.getElementById('tot-p-tempo').innerText = 'Rp ' + pt.toLocaleString();
         };
 
-        document.getElementById('fileInput').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const html = evt.target.result.split('\n').slice(1).filter(l=>l).map(l => `<tr>${l.replace(/"/g,'').split(',').map(v=>`<td>${v}</td>`).join('')}<td><button onclick="window.edit(this)">Edit</button><button onclick="window.del(this)">Hapus</button></td></tr>`).join('');
-                document.getElementById('tableBody').innerHTML = html;
-                set(ref(db, 'data'), { html: html });
-            };
-            reader.readAsText(e.target.files[0]);
+        window.applyFilter = () => {
+            const t = document.getElementById('filterTgl').value, s = document.getElementById('filterSales').value;
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                let d = r.cells[1].innerText.split('/');
+                let iso = d.length == 3 ? `20${d[2]}-${d[1].padStart(2,'0')}-${d[0].padStart(2,'0')}` : "";
+                r.style.display = ((s==""||r.cells[0].innerText.trim()==s) && (t==""||iso==t)) ? "" : "none";
+            });
+            hitung();
         };
-
-        window.edit = (b) => {
-            const r = b.closest('tr');
-            if(r.contentEditable == "true") { r.contentEditable="false"; b.innerText="Edit"; set(ref(db, 'data'), { html: document.getElementById('tableBody').innerHTML }); }
-            else { r.contentEditable="true"; b.innerText="Simpan"; }
-        };
-
-        window.del = (b) => { b.closest('tr').remove(); set(ref(db, 'data'), { html: document.getElementById('tableBody').innerHTML }); };
-
-        onValue(ref(db, 'data'), (snapshot) => {
-            const data = snapshot.val();
-            if (data) { document.getElementById('tableBody').innerHTML = data.html; hitung(); }
-        });
+        // Tambahkan fungsi edit/del dengan window.saveToCloud...
+        onValue(ref(db, 'data'), (s) => { if(s.val()) { document.getElementById('tableBody').innerHTML = s.val().html; hitung(); } });
     </script>
 </body>
 </html>
