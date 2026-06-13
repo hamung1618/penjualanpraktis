@@ -38,9 +38,9 @@
             <div class="metric"><small>Profit Tempo</small><strong id="tot-p-tempo">Rp 0</strong></div>
         </div>
         <div class="sales-grid">
-            <div class="sales-card"><div class="sales-name">RAJU</div><div class="sales-row"><span>Cash:</span><span id="v-RAJU-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-RAJU-tempo">0</span></div></div>
-            <div class="sales-card"><div class="sales-name">HAFID</div><div class="sales-row"><span>Cash:</span><span id="v-HAFID-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-HAFID-tempo">0</span></div></div>
-            <div class="sales-card"><div class="sales-name">JOSSY</div><div class="sales-row"><span>Cash:</span><span id="v-JOSSY-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-JOSSY-tempo">0</span></div></div>
+            <div class="sales-card"><div class="sales-name">RAJU</div><div class="sales-row"><span>Cash:</span><span id="v-RAJU-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-RAJU-tempo">0</span></div><div class="sales-row"><span>Profit Cash:</span><span id="v-RAJU-pc">0</span></div><div class="sales-row"><span>Profit Tempo:</span><span id="v-RAJU-pt">0</span></div></div>
+            <div class="sales-card"><div class="sales-name">HAFID</div><div class="sales-row"><span>Cash:</span><span id="v-HAFID-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-HAFID-tempo">0</span></div><div class="sales-row"><span>Profit Cash:</span><span id="v-HAFID-pc">0</span></div><div class="sales-row"><span>Profit Tempo:</span><span id="v-HAFID-pt">0</span></div></div>
+            <div class="sales-card"><div class="sales-name">JOSSY</div><div class="sales-row"><span>Cash:</span><span id="v-JOSSY-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-JOSSY-tempo">0</span></div><div class="sales-row"><span>Profit Cash:</span><span id="v-JOSSY-pc">0</span></div><div class="sales-row"><span>Profit Tempo:</span><span id="v-JOSSY-pt">0</span></div></div>
         </div>
         <div class="filter-bar">
             <input type="date" id="filterTgl">
@@ -57,49 +57,39 @@
         </div>
     </div>
     <script>
-        // Fungsi pembersih angka yang lebih kuat
-        function parseAngka(str) {
-            if (!str) return 0;
-            return parseFloat(str.toString().replace(/[^0-9.-]+/g, '')) || 0;
-        }
-
+        function parseAngka(str) { return parseFloat(str.toString().replace(/[^0-9.-]+/g, '')) || 0; }
         function hitungUlang() {
+            document.querySelectorAll('[id^="v-"]').forEach(el => el.innerText = '0');
             let tC=0, tT=0, tpC=0, tpT=0;
             const rows = document.querySelectorAll('#tableBody tr');
             rows.forEach(r => {
                 if (r.style.display === 'none') return;
                 const c = r.getElementsByTagName('td');
                 if(c.length < 12) return;
+                const s = c[0].innerText.trim();
                 const n = parseAngka(c[9].innerText);
                 const p = parseAngka(c[11].innerText);
                 const isT = c[10].innerText.trim().toLowerCase() === 'kredit';
                 if(isT) { tT += n; tpT += p; } else { tC += n; tpC += p; }
+                const elN = document.getElementById(`v-${s}-${isT?'tempo':'cash'}`);
+                const eP = document.getElementById(`v-${s}-${isT?'pt':'pc'}`);
+                if(elN) elN.innerText = (parseAngka(elN.innerText) + n).toLocaleString();
+                if(eP) eP.innerText = (parseAngka(eP.innerText) + p).toLocaleString();
             });
             document.getElementById('tot-cash').innerText = 'Rp ' + tC.toLocaleString();
             document.getElementById('tot-tempo').innerText = 'Rp ' + tT.toLocaleString();
             document.getElementById('tot-p-cash').innerText = 'Rp ' + tpC.toLocaleString();
             document.getElementById('tot-p-tempo').innerText = 'Rp ' + tpT.toLocaleString();
         }
-
         function editRow(b) {
             const r = b.closest('tr');
             if (r.contentEditable === "true") {
-                r.contentEditable = "false";
-                b.innerText = "Edit";
+                r.contentEditable = "false"; b.innerText = "Edit";
                 localStorage.setItem('gajahMasData', document.getElementById('tableBody').innerHTML);
                 hitungUlang();
-            } else {
-                r.contentEditable = "true";
-                b.innerText = "Simpan";
-            }
+            } else { r.contentEditable = "true"; b.innerText = "Simpan"; }
         }
-
-        function hapusRow(b) {
-            b.closest('tr').remove();
-            localStorage.setItem('gajahMasData', document.getElementById('tableBody').innerHTML);
-            hitungUlang();
-        }
-
+        function hapusRow(b) { b.closest('tr').remove(); localStorage.setItem('gajahMasData', document.getElementById('tableBody').innerHTML); hitungUlang(); }
         document.getElementById('fileInput').onchange = function(e) {
             const reader = new FileReader();
             reader.onload = function(evt) {
@@ -117,13 +107,20 @@
             };
             reader.readAsText(e.target.files[0]);
         };
-
+        function applyFilter() {
+            const vTgl = document.getElementById('filterTgl').value;
+            const vSales = document.getElementById('filterSales').value;
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach(r => {
+                let p = r.cells[1].innerText.trim().split('/');
+                let tISO = p.length === 3 ? `20${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` : "";
+                r.style.display = ((vSales==="" || r.cells[0].innerText.trim()===vSales) && (vTgl==="" || tISO===vTgl)) ? "" : "none";
+            });
+            hitungUlang();
+        }
         window.onload = () => {
             const saved = localStorage.getItem('gajahMasData');
-            if (saved) {
-                document.getElementById('tableBody').innerHTML = saved;
-                hitungUlang();
-            }
+            if (saved) { document.getElementById('tableBody').innerHTML = saved; hitungUlang(); }
         };
     </script>
 </body>
