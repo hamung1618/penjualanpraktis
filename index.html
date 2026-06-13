@@ -5,8 +5,9 @@
     <title>Gajah Mas Dashboard</title>
     <style>
         body { font-family: sans-serif; display: flex; background: #f8fafc; margin: 0; }
-        .sidebar { width: 220px; height: 100vh; background: #0f172a; color: white; padding: 20px; position: fixed; }
-        .main { margin-left: 220px; padding: 20px; width: 100%; }
+        /* Sidebar kembali ke posisi normal, bukan fixed */
+        .sidebar { width: 220px; min-height: 100vh; background: #0f172a; color: white; padding: 20px; }
+        .main { padding: 20px; width: 100%; }
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
         .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .metric, .sales-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
@@ -59,7 +60,6 @@
         const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
         const db = getDatabase(app);
 
-        // FUNGSI UTAMA (Sama persis dengan logika Anda)
         window.hitung = () => {
             let sD = { RAJU:{C:0,T:0,PC:0,PT:0}, HAFID:{C:0,T:0,PC:0,PT:0}, JOSSY:{C:0,T:0,PC:0,PT:0} };
             let gC=0, gT=0, gPC=0, gPT=0;
