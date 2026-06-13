@@ -94,9 +94,10 @@
             const vSales = document.getElementById('filterSales').value;
             const vProd = document.getElementById('filterProduk').value.toLowerCase();
             const rows = document.querySelectorAll('#tableBody tr');
+            
             rows.forEach(r => {
-                let dateStr = r.cells[1].innerText.trim().split(' ')[0];
-                let p = dateStr.split('/');
+                let dS = r.cells[1].innerText.trim().split(' ')[0];
+                let p = dS.split('/');
                 let tISO = "";
                 if(p.length === 3) {
                     let d = p[0].padStart(2, '0');
@@ -104,10 +105,11 @@
                     let y = p[2].length === 2 ? "20" + p[2] : p[2];
                     tISO = `${y}-${m}-${d}`;
                 }
-                const matchSales = (vSales === "" || r.cells[0].innerText.trim() === vSales);
-                const matchTgl = (vTgl === "" || tISO === vTgl);
-                const matchProd = (r.cells[3].innerText.toLowerCase().includes(vProd));
-                r.style.display = (matchSales && matchTgl && matchProd) ? "" : "none";
+                
+                const mSales = (vSales === "" || r.cells[0].innerText.trim() === vSales);
+                const mTgl = (vTgl === "" || tISO === vTgl);
+                const mProd = (r.cells[3].innerText.toLowerCase().includes(vProd));
+                r.style.display = (mSales && mTgl && mProd) ? "" : "none";
             });
             hitungUlang();
         }
