@@ -2,53 +2,62 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gajah Mas Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
         body { background: #f8fafc; display: flex; }
         .sidebar { width: 220px; height: 100vh; background: #0f172a; color: white; padding: 20px; position: fixed; }
         .main { margin-left: 220px; padding: 25px; width: calc(100% - 220px); }
-        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-        .metric { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .metric small { display: block; font-size: 11px; color: #64748b; }
-        .metric strong { font-size: 16px; color: #0f172a; }
-        .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-        .sales-card { background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .sales-name { font-weight: 600; font-size: 12px; margin-bottom: 8px; border-bottom: 1px solid #eee; }
-        .sales-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; }
-        .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 15px; width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        
+        /* Layout Mobile */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; padding: 15px; }
+            .main { margin-left: 0; padding: 15px; width: 100%; }
+            .summary-grid, .sales-grid { grid-template-columns: 1fr !important; }
+        }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .metric, .sales-card { background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .sales-name { font-weight: 600; font-size: 12px; margin-bottom: 5px; border-bottom: 1px solid #eee; }
+        .sales-row { display: flex; justify-content: space-between; font-size: 11px; }
+        .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 10px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th, td { padding: 8px; border: 1px solid #e2e8f0; text-align: left; }
         th { background: #f1f5f9; }
-        .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; border: 1px solid #e2e8f0; }
-        button { cursor: pointer; padding: 5px 10px; background: #e2e8f0; border: none; border-radius: 3px; font-size: 11px; }
+        .filter-bar { background: white; padding: 10px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; border: 1px solid #e2e8f0; }
+        button { cursor: pointer; padding: 5px 10px; background: #059669; color: white; border: none; border-radius: 3px; }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div style="font-weight:bold; margin-bottom:30px; font-size:18px;">🐘 Gajah Mas</div>
-        <label for="fileInput" style="display:block; padding:10px; color:#cbd5e1; cursor:pointer; border: 1px dashed #cbd5e1; border-radius: 5px;">Upload Data (CSV)</label>
+        <div style="font-weight:bold; margin-bottom:20px;">🐘 Gajah Mas</div>
+        <label for="fileInput" style="display:block; padding:10px; border: 1px dashed #cbd5e1; cursor:pointer; font-size: 12px;">Upload CSV</label>
         <input type="file" id="fileInput" style="display:none" accept=".csv">
     </div>
+
     <div class="main">
         <div class="summary-grid">
-            <div class="metric"><small>Penjualan Cash</small><strong id="tot-cash">Rp 0</strong></div>
-            <div class="metric"><small>Penjualan Tempo</small><strong id="tot-tempo">Rp 0</strong></div>
-            <div class="metric"><small>Profit Cash</small><strong id="tot-p-cash">Rp 0</strong></div>
-            <div class="metric"><small>Profit Tempo</small><strong id="tot-p-tempo">Rp 0</strong></div>
+            <div class="metric"><small>Cash</small><div id="tot-cash">Rp 0</div></div>
+            <div class="metric"><small>Tempo</small><div id="tot-tempo">Rp 0</div></div>
+            <div class="metric"><small>P.Cash</small><div id="tot-p-cash">Rp 0</div></div>
+            <div class="metric"><small>P.Tempo</small><div id="tot-p-tempo">Rp 0</div></div>
         </div>
+
         <div class="sales-grid">
-            <div class="sales-card"><div class="sales-name">RAJU</div><div class="sales-row"><span>Cash:</span><span id="v-RAJU-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-RAJU-tempo">0</span></div><div class="sales-row"><span>Profit Cash:</span><span id="v-RAJU-pc">0</span></div><div class="sales-row"><span>Profit Tempo:</span><span id="v-RAJU-pt">0</span></div></div>
-            <div class="sales-card"><div class="sales-name">HAFID</div><div class="sales-row"><span>Cash:</span><span id="v-HAFID-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-HAFID-tempo">0</span></div><div class="sales-row"><span>Profit Cash:</span><span id="v-HAFID-pc">0</span></div><div class="sales-row"><span>Profit Tempo:</span><span id="v-HAFID-pt">0</span></div></div>
-            <div class="sales-card"><div class="sales-name">JOSSY</div><div class="sales-row"><span>Cash:</span><span id="v-JOSSY-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-JOSSY-tempo">0</span></div><div class="sales-row"><span>Profit Cash:</span><span id="v-JOSSY-pc">0</span></div><div class="sales-row"><span>Profit Tempo:</span><span id="v-JOSSY-pt">0</span></div></div>
+            <div class="sales-card"><div class="sales-name">RAJU</div><div class="sales-row"><span>Cash:</span><span id="v-RAJU-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-RAJU-tempo">0</span></div><div class="sales-row"><span>P.Cash:</span><span id="v-RAJU-pc">0</span></div><div class="sales-row"><span>P.Tempo:</span><span id="v-RAJU-pt">0</span></div></div>
+            <div class="sales-card"><div class="sales-name">HAFID</div><div class="sales-row"><span>Cash:</span><span id="v-HAFID-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-HAFID-tempo">0</span></div><div class="sales-row"><span>P.Cash:</span><span id="v-HAFID-pc">0</span></div><div class="sales-row"><span>P.Tempo:</span><span id="v-HAFID-pt">0</span></div></div>
+            <div class="sales-card"><div class="sales-name">JOSSY</div><div class="sales-row"><span>Cash:</span><span id="v-JOSSY-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-JOSSY-tempo">0</span></div><div class="sales-row"><span>P.Cash:</span><span id="v-JOSSY-pc">0</span></div><div class="sales-row"><span>P.Tempo:</span><span id="v-JOSSY-pt">0</span></div></div>
         </div>
+
         <div class="filter-bar">
             <input type="date" id="filterTgl">
-            <select id="filterSales">
-                <option value="">Semua Sales</option><option value="RAJU">RAJU</option><option value="HAFID">HAFID</option><option value="JOSSY">JOSSY</option>
-            </select>
-            <button onclick="applyFilter()" style="padding: 8px 16px; background: #059669; color: white; border-radius: 4px; font-weight: bold;">Terapkan Filter</button>
+            <select id="filterSales"><option value="">Semua Sales</option><option value="RAJU">RAJU</option><option value="HAFID">HAFID</option><option value="JOSSY">JOSSY</option></select>
+            <button onclick="applyFilter()">Terapkan Filter</button>
         </div>
+
         <div class="table-container">
             <table id="mainTable">
                 <thead><tr><th>Sales</th><th>Tanggal</th><th>Faktur</th><th>Produk</th><th>Jml</th><th>Satuan</th><th>H.Beli</th><th>Disc</th><th>H.Jual</th><th>Nominal</th><th>Bayar</th><th>Profit</th><th>Aksi</th></tr></thead>
@@ -56,72 +65,59 @@
             </table>
         </div>
     </div>
+
     <script>
-        function parseAngka(str) { return parseFloat(str.toString().replace(/[^0-9.-]+/g, '')) || 0; }
-        function hitungUlang() {
+        function pA(s) { return parseFloat(s.toString().replace(/[^0-9.-]+/g, '')) || 0; }
+        
+        function hitung() {
             document.querySelectorAll('[id^="v-"]').forEach(el => el.innerText = '0');
-            let tC=0, tT=0, tpC=0, tpT=0;
-            const rows = document.querySelectorAll('#tableBody tr');
-            rows.forEach(r => {
+            let tC=0, tT=0, pc=0, pt=0;
+            document.querySelectorAll('#tableBody tr').forEach(r => {
                 if (r.style.display === 'none') return;
                 const c = r.getElementsByTagName('td');
                 if(c.length < 12) return;
-                const s = c[0].innerText.trim();
-                const n = parseAngka(c[9].innerText);
-                const p = parseAngka(c[11].innerText);
-                const isT = c[10].innerText.trim().toLowerCase() === 'kredit';
-                if(isT) { tT += n; tpT += p; } else { tC += n; tpC += p; }
-                const elN = document.getElementById(`v-${s}-${isT?'tempo':'cash'}`);
-                const eP = document.getElementById(`v-${s}-${isT?'pt':'pc'}`);
-                if(elN) elN.innerText = (parseAngka(elN.innerText) + n).toLocaleString();
-                if(eP) eP.innerText = (parseAngka(eP.innerText) + p).toLocaleString();
+                const s = c[0].innerText.trim(), n = pA(c[9].innerText), p = pA(c[11].innerText), isT = c[10].innerText.includes('Kredit');
+                if(isT) { tT += n; pt += p; } else { tC += n; pc += p; }
+                const eN = document.getElementById(`v-${s}-${isT?'tempo':'cash'}`), eP = document.getElementById(`v-${s}-${isT?'pt':'pc'}`);
+                if(eN) eN.innerText = (pA(eN.innerText) + n).toLocaleString();
+                if(eP) eP.innerText = (pA(eP.innerText) + p).toLocaleString();
             });
             document.getElementById('tot-cash').innerText = 'Rp ' + tC.toLocaleString();
             document.getElementById('tot-tempo').innerText = 'Rp ' + tT.toLocaleString();
-            document.getElementById('tot-p-cash').innerText = 'Rp ' + tpC.toLocaleString();
-            document.getElementById('tot-p-tempo').innerText = 'Rp ' + tpT.toLocaleString();
+            document.getElementById('tot-p-cash').innerText = 'Rp ' + pc.toLocaleString();
+            document.getElementById('tot-p-tempo').innerText = 'Rp ' + pt.toLocaleString();
         }
-        function editRow(b) {
-            const r = b.closest('tr');
-            if (r.contentEditable === "true") {
-                r.contentEditable = "false"; b.innerText = "Edit";
-                localStorage.setItem('gajahMasData', document.getElementById('tableBody').innerHTML);
-                hitungUlang();
-            } else { r.contentEditable = "true"; b.innerText = "Simpan"; }
-        }
-        function hapusRow(b) { b.closest('tr').remove(); localStorage.setItem('gajahMasData', document.getElementById('tableBody').innerHTML); hitungUlang(); }
-        document.getElementById('fileInput').onchange = function(e) {
+
+        document.getElementById('fileInput').onchange = (e) => {
             const reader = new FileReader();
-            reader.onload = function(evt) {
-                const lines = evt.target.result.split('\n');
-                let html = '';
-                lines.forEach((line, i) => {
-                    if(i === 0 || line.trim() == "") return;
-                    let c = line.replace(/"/g, '').split(',');
-                    if(c.length < 12) return;
-                    html += `<tr>${c.map(v=>`<td>${v}</td>`).join('')}<td><button onclick="editRow(this)">Edit</button><button onclick="hapusRow(this)">Hapus</button></td></tr>`;
-                });
+            reader.onload = (evt) => {
+                const html = evt.target.result.split('\n').slice(1).filter(l=>l).map(l => `<tr>${l.replace(/"/g,'').split(',').map(v=>`<td>${v}</td>`).join('')}<td><button onclick="edit(this)">Edit</button><button onclick="del(this)">Hapus</button></td></tr>`).join('');
                 document.getElementById('tableBody').innerHTML = html;
-                localStorage.setItem('gajahMasData', html);
-                hitungUlang();
+                localStorage.setItem('data', html);
+                hitung();
             };
             reader.readAsText(e.target.files[0]);
         };
-        function applyFilter() {
-            const vTgl = document.getElementById('filterTgl').value;
-            const vSales = document.getElementById('filterSales').value;
-            const rows = document.querySelectorAll('#tableBody tr');
-            rows.forEach(r => {
-                let p = r.cells[1].innerText.trim().split('/');
-                let tISO = p.length === 3 ? `20${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` : "";
-                r.style.display = ((vSales==="" || r.cells[0].innerText.trim()===vSales) && (vTgl==="" || tISO===vTgl)) ? "" : "none";
-            });
-            hitungUlang();
+
+        function edit(b) {
+            const r = b.closest('tr');
+            if(r.contentEditable == "true") { r.contentEditable="false"; b.innerText="Edit"; localStorage.setItem('data', document.getElementById('tableBody').innerHTML); hitung(); }
+            else { r.contentEditable="true"; b.innerText="Simpan"; }
         }
-        window.onload = () => {
-            const saved = localStorage.getItem('gajahMasData');
-            if (saved) { document.getElementById('tableBody').innerHTML = saved; hitungUlang(); }
-        };
+
+        function del(b) { b.closest('tr').remove(); localStorage.setItem('data', document.getElementById('tableBody').innerHTML); hitung(); }
+
+        function applyFilter() {
+            const t = document.getElementById('filterTgl').value, s = document.getElementById('filterSales').value;
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                let d = r.cells[1].innerText.split('/');
+                let iso = d.length == 3 ? `20${d[2]}-${d[1].padStart(2,'0')}-${d[0].padStart(2,'0')}` : "";
+                r.style.display = ((s==""||r.cells[0].innerText.trim()==s) && (t==""||iso==t)) ? "" : "none";
+            });
+            hitung();
+        }
+
+        window.onload = () => { if(localStorage.getItem('data')) { document.getElementById('tableBody').innerHTML = localStorage.getItem('data'); hitung(); } };
     </script>
 </body>
 </html>
