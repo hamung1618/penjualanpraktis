@@ -13,6 +13,7 @@
         .metric small { display: block; font-size: 11px; color: #64748b; }
         .metric strong { font-size: 16px; color: #0f172a; }
         .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; border: 1px solid #e2e8f0; align-items: center; }
+        .btn-filter { background: #059669; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; }
         .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 15px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th { background: #f1f5f9; padding: 10px; border: 1px solid #e2e8f0; text-align: left; }
@@ -25,18 +26,22 @@
         <label for="fileInput" style="display:block; padding:10px; color:#cbd5e1; cursor:pointer; font-size: 14px; border: 1px dashed #cbd5e1; border-radius: 5px;">Upload Data (CSV)</label>
         <input type="file" id="fileInput" style="display:none" accept=".csv">
     </div>
+
     <div class="main">
         <h2 id="headerBulan" style="margin-bottom:20px; color:#1e293b;">Data Penjualan</h2>
+
         <div class="summary-grid">
             <div class="metric"><small>Penjualan Cash</small><strong id="tot-cash">Rp 0</strong></div>
             <div class="metric"><small>Penjualan Tempo</small><strong id="tot-tempo">Rp 0</strong></div>
             <div class="metric"><small>Profit Cash</small><strong id="tot-p-cash">Rp 0</strong></div>
             <div class="metric"><small>Profit Tempo</small><strong id="tot-p-tempo">Rp 0</strong></div>
         </div>
+
         <div class="filter-bar">
             <input type="date" id="filterTgl">
-            <button class="btn-filter" style="background:#059669; color:white; padding:8px 16px; border:none; cursor:pointer" onclick="applyFilter()">Terapkan Filter</button>
+            <button class="btn-filter" onclick="applyFilter()">Terapkan Filter</button>
         </div>
+
         <div class="table-container">
             <table id="mainTable">
                 <thead><tr><th>Sales</th><th>Tanggal</th><th>Faktur</th><th>Produk</th><th>Jml</th><th>Satuan</th><th>H.Beli</th><th>Disc</th><th>H.Jual</th><th>Nominal</th><th>Bayar</th><th>Profit</th><th>Aksi</th></tr></thead>
@@ -46,20 +51,37 @@
     </div>
 
     <script>
-        function applyFilter() {
-            const vTgl = document.getElementById('filterTgl').value; // Format input: YYYY-MM-DD
+        function hitungUlang() {
+            let tC=0, tT=0, tpC=0, tpT=0;
             const rows = document.querySelectorAll('#tableBody tr');
-            
-            rows.forEach(r => {
-                const tglData = r.cells[1].innerText.trim().split(' ')[0]; // Ambil "01/06/2026"
-                const p = tglData.split('/'); // ["01", "06", "2026"]
-                
-                // Konversi tanggal data (DD/MM/YYYY) menjadi format YYYY-MM-DD
-                const formattedData = p[2] + "-" + p[1] + "-" + p[0];
-                
-                // Bandingkan secara ketat
-                r.style.display = (vTgl === "" || formattedData === vTgl) ? "" : "none";
+            rows.forEach(row => {
+                if (row.style.display !== 'none') {
+                    const c = row.getElementsByTagName('td');
+                    const n = parseFloat(c[9].innerText.replace(/,/g,'')) || 0;
+                    const p = parseFloat(c[11].innerText.replace(/,/g,'')) || 0;
+                    const isT = c[10].innerText.trim().toLowerCase() === 'kredit';
+                    if(isT) { tT += n; tpT += p; } else { tC += n; tpC += p; }
+                }
             });
+            document.getElementById('tot-cash').innerText = 'Rp ' + tC.toLocaleString();
+            document.getElementById('tot-tempo').innerText = 'Rp ' + tT.toLocaleString();
+            document.getElementById('tot-p-cash').innerText = 'Rp ' + tpC.toLocaleString();
+            document.getElementById('tot-p-tempo').innerText = 'Rp ' + tpT.toLocaleString();
+        }
+
+        function applyFilter() {
+            const vTgl = document.getElementById('filterTgl').value;
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach(r => {
+                const tglData = r.cells[1].innerText.trim().split(' ')[0];
+                const p = tglData.split('/');
+                if(p.length === 3) {
+                    const thn = p[2].length === 2 ? "20" + p[2] : p[2];
+                    const formattedData = thn + "-" + p[1].padStart(2, '0') + "-" + p[0].padStart(2, '0');
+                    r.style.display = (vTgl === "" || formattedData === vTgl) ? "" : "none";
+                }
+            });
+            hitungUlang();
         }
 
         document.getElementById('fileInput').onchange = function(e) {
@@ -70,11 +92,22 @@
                 lines.forEach((line, i) => {
                     if(i === 0 || line.trim() == "") return;
                     let c = line.replace(/"/g, '').split(',');
-                    html += `<tr>${c.map(v=>`<td>${v}</td>`).join('')}<td><button onclick="this.closest('tr').remove()">Hapus</button></td></tr>`;
+                    if(c[1] && c[1].includes(' ')) c[1] = c[1].split(' ')[0];
+                    html += `<tr>${c.map(v=>`<td>${v}</td>`).join('')}<td><button onclick="this.closest('tr').remove(); hitungUlang();">Hapus</button></td></tr>`;
                 });
                 document.getElementById('tableBody').innerHTML = html;
+                localStorage.setItem('gajahMasData', html);
+                hitungUlang();
             };
             reader.readAsText(e.target.files[0]);
+        };
+
+        window.onload = () => {
+            const saved = localStorage.getItem('gajahMasData');
+            if (saved) {
+                document.getElementById('tableBody').innerHTML = saved;
+                hitungUlang();
+            }
         };
     </script>
 </body>
