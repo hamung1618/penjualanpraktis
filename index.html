@@ -70,7 +70,6 @@
         const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
         const db = getDatabase(app);
 
-        // Fungsi Hitung
         window.hitung = () => {
             let sD = { RAJU:{C:0,T:0,PC:0,PT:0}, HAFID:{C:0,T:0,PC:0,PT:0}, JOSSY:{C:0,T:0,PC:0,PT:0} };
             let gC=0, gT=0, gPC=0, gPT=0;
@@ -91,7 +90,6 @@
             Object.keys(sD).forEach(s => document.getElementById(`v-${s}-data`).innerHTML = `Cash: ${sD[s].C.toLocaleString()}<br>Tempo: ${sD[s].T.toLocaleString()}<br>P.Cash: ${sD[s].PC.toLocaleString()}<br>P.Tempo: ${sD[s].PT.toLocaleString()}`);
         };
 
-        // Fungsi Filter
         window.applyFilter = () => {
             const t = document.getElementById('filterTgl').value, s = document.getElementById('filterSales').value;
             document.querySelectorAll('#tableBody tr').forEach(r => {
@@ -100,8 +98,19 @@
             hitung();
         };
 
-        onValue(ref(db, 'penjualan/data'), (s) => { if(s.val()) { document.getElementById('tableBody').innerHTML = s.val().html; hitung(); } });
-        window.saveToCloud = () => { set(ref(db, 'penjualan/data'), { html: document.getElementById('tableBody').innerHTML }); hitung(); };
+        onValue(ref(db, 'penjualan/data'), (s) => { 
+            if(s.val()) { 
+                // Membersihkan tanda petik saat dimuat dari database
+                document.getElementById('tableBody').innerHTML = s.val().html.replace(/"/g, ''); 
+                hitung(); 
+            } 
+        });
+
+        window.saveToCloud = () => { 
+            // Membersihkan tanda petik sebelum disimpan
+            set(ref(db, 'penjualan/data'), { html: document.getElementById('tableBody').innerHTML.replace(/"/g, '') }); 
+            hitung(); 
+        };
         
         window.edit = (btn) => {
             const r = btn.closest('tr');
