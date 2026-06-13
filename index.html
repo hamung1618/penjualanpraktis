@@ -2,27 +2,26 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gajah Mas Cloud Dashboard</title>
+    <title>Gajah Mas Dashboard</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
-        body { background: #f8fafc; display: flex; }
+        body { font-family: sans-serif; display: flex; background: #f8fafc; }
         .sidebar { width: 220px; height: 100vh; background: #0f172a; color: white; padding: 20px; position: fixed; }
-        .main { margin-left: 220px; padding: 25px; width: calc(100% - 220px); }
-        @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } .main { margin-left: 0; width: 100%; } .summary-grid, .sales-grid { grid-template-columns: 1fr !important; } }
+        .main { margin-left: 220px; padding: 20px; width: 100%; }
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
         .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .metric, .sales-card { background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .table-container { background: white; border-radius: 8px; padding: 10px; overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th, td { padding: 8px; border: 1px solid #e2e8f0; }
-        button { cursor: pointer; padding: 5px 10px; background: #059669; color: white; border: none; border-radius: 3px; }
+        .metric, .sales-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .sales-card b { display: block; margin-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 8px; border: 1px solid #e2e8f0; font-size: 11px; }
+        button { cursor: pointer; padding: 4px 8px; border: none; border-radius: 3px; color: white; margin-right: 5px; }
+        .btn-edit { background: #059669; }
+        .btn-hapus { background: #dc2626; }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div style="font-weight:bold; margin-bottom:20px;">🐘 Gajah Mas</div>
-        <label for="fileInput" style="display:block; padding:10px; border: 1px dashed #cbd5e1; cursor:pointer; font-size: 12px;">Upload CSV</label>
+        <div>🐘 Gajah Mas</div>
+        <label for="fileInput" style="display:block; margin-top:20px; cursor:pointer;">Upload CSV</label>
         <input type="file" id="fileInput" style="display:none" accept=".csv">
     </div>
 
@@ -34,16 +33,14 @@
             <div class="metric"><small>P.Tempo</small><div id="tot-p-tempo">Rp 0</div></div>
         </div>
         <div class="sales-grid">
-            <div class="sales-card"><b>RAJU</b><div id="v-RAJU-data">C:0 T:0 PC:0 PT:0</div></div>
-            <div class="sales-card"><b>HAFID</b><div id="v-HAFID-data">C:0 T:0 PC:0 PT:0</div></div>
-            <div class="sales-card"><b>JOSSY</b><div id="v-JOSSY-data">C:0 T:0 PC:0 PT:0</div></div>
+            <div class="sales-card"><b>RAJU</b><div id="v-RAJU-data" style="font-size:10px;"></div></div>
+            <div class="sales-card"><b>HAFID</b><div id="v-HAFID-data" style="font-size:10px;"></div></div>
+            <div class="sales-card"><b>JOSSY</b><div id="v-JOSSY-data" style="font-size:10px;"></div></div>
         </div>
-        <div class="table-container">
-            <table id="mainTable">
-                <thead><tr><th>Sales</th><th>Tanggal</th><th>Faktur</th><th>Produk</th><th>Jml</th><th>Satuan</th><th>H.Beli</th><th>Disc</th><th>H.Jual</th><th>Nominal</th><th>Bayar</th><th>Profit</th><th>Aksi</th></tr></thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
+        <table>
+            <thead><tr><th>Sales</th><th>Tanggal</th><th>Faktur</th><th>Produk</th><th>Jml</th><th>Satuan</th><th>H.Beli</th><th>Disc</th><th>H.Jual</th><th>Nominal</th><th>Bayar</th><th>Profit</th><th>Aksi</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
     </div>
 
     <script type="module">
@@ -64,36 +61,42 @@
         const db = getDatabase(app);
 
         window.hitung = () => {
-            let totals = { RAJU: {C:0, T:0, PC:0, PT:0}, HAFID: {C:0, T:0, PC:0, PT:0}, JOSSY: {C:0, T:0, PC:0, PT:0} };
+            let sD = { RAJU:{C:0,T:0,PC:0,PT:0}, HAFID:{C:0,T:0,PC:0,PT:0}, JOSSY:{C:0,T:0,PC:0,PT:0} };
             let gC=0, gT=0, gPC=0, gPT=0;
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 const c = r.getElementsByTagName('td');
                 if(c.length < 12) return;
-                const sales = c[0].innerText.trim(), n = parseFloat(c[9].innerText.replace(/[^0-9.-]+/g,''))||0, p = parseFloat(c[11].innerText.replace(/[^0-9.-]+/g,''))||0, isT = c[10].innerText.includes('Kredit');
-                if(totals[sales]) {
-                    if(isT) { totals[sales].T+=n; totals[sales].PT+=p; gT+=n; gPT+=p; } 
-                    else { totals[sales].C+=n; totals[sales].PC+=p; gC+=n; gPC+=p; }
+                const s = c[0].innerText.replace(/"/g,'').trim(), n = parseFloat(c[9].innerText.replace(/[^0-9.-]+/g,''))||0, p = parseFloat(c[11].innerText.replace(/[^0-9.-]+/g,''))||0, isT = c[10].innerText.includes('Kredit');
+                if(sD[s]) { 
+                    if(isT) { sD[s].T+=n; sD[s].PT+=p; gT+=n; gPT+=p; } 
+                    else { sD[s].C+=n; sD[s].PC+=p; gC+=n; gPC+=p; } 
                 }
             });
             document.getElementById('tot-cash').innerText = 'Rp ' + gC.toLocaleString();
             document.getElementById('tot-tempo').innerText = 'Rp ' + gT.toLocaleString();
             document.getElementById('tot-p-cash').innerText = 'Rp ' + gPC.toLocaleString();
             document.getElementById('tot-p-tempo').innerText = 'Rp ' + gPT.toLocaleString();
-            Object.keys(totals).forEach(s => document.getElementById(`v-${s}-data`).innerText = `C:${totals[s].C.toLocaleString()} T:${totals[s].T.toLocaleString()} PC:${totals[s].PC.toLocaleString()} PT:${totals[s].PT.toLocaleString()}`);
+            Object.keys(sD).forEach(s => document.getElementById(`v-${s}-data`).innerHTML = `Cash: ${sD[s].C.toLocaleString()}<br>Tempo: ${sD[s].T.toLocaleString()}<br>P.Cash: ${sD[s].PC.toLocaleString()}<br>P.Tempo: ${sD[s].PT.toLocaleString()}`);
         };
 
         onValue(ref(db, 'penjualan/data'), (s) => { if(s.val()) { document.getElementById('tableBody').innerHTML = s.val().html; hitung(); } });
         window.saveToCloud = () => { set(ref(db, 'penjualan/data'), { html: document.getElementById('tableBody').innerHTML }); hitung(); };
         
+        window.edit = (btn) => {
+            const r = btn.closest('tr');
+            if(r.contentEditable === "true") { r.contentEditable = "false"; btn.innerText = "Edit"; saveToCloud(); }
+            else { r.contentEditable = "true"; btn.innerText = "Simpan"; }
+        };
+        window.del = (btn) => { btn.closest('tr').remove(); saveToCloud(); };
+
         document.getElementById('fileInput').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (evt) => {
-                document.getElementById('tableBody').innerHTML = evt.target.result.split('\n').slice(1).map(r => `<tr>${r.split(',').map(c => `<td>${c}</td>`).join('')}<td><button onclick="window.del(this)">Hapus</button></td></tr>`).join('');
-                window.saveToCloud();
+                document.getElementById('tableBody').innerHTML = evt.target.result.split('\n').slice(1).filter(l=>l).map(r => `<tr>${r.split(',').map(c => `<td>${c.replace(/"/g,'')}</td>`).join('')}<td><button class="btn-edit" onclick="window.edit(this)">Edit</button><button class="btn-hapus" onclick="window.del(this)">Hapus</button></td></tr>`).join('');
+                saveToCloud();
             };
             reader.readAsText(e.target.files[0]);
         };
-        window.del = (btn) => { btn.closest('tr').remove(); window.saveToCloud(); };
     </script>
 </body>
 </html>
