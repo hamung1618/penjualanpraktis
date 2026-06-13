@@ -95,13 +95,19 @@
             const vProd = document.getElementById('filterProduk').value.toLowerCase();
             const rows = document.querySelectorAll('#tableBody tr');
             rows.forEach(r => {
-                const tglData = r.cells[1].innerText.trim().split(' ')[0];
-                const p = tglData.split('/');
+                let dateStr = r.cells[1].innerText.trim().split(' ')[0];
+                let p = dateStr.split('/');
+                let tISO = "";
                 if(p.length === 3) {
-                    const thn = p[2].length === 2 ? "20" + p[2] : p[2];
-                    const formattedData = thn + "-" + p[1].padStart(2, '0') + "-" + p[0].padStart(2, '0');
-                    r.style.display = (vSales==""||r.cells[0].innerText.trim()==vSales) && (vTgl==""||formattedData==vTgl) && (r.cells[3].innerText.toLowerCase().includes(vProd)) ? "" : "none";
+                    let d = p[0].padStart(2, '0');
+                    let m = p[1].padStart(2, '0');
+                    let y = p[2].length === 2 ? "20" + p[2] : p[2];
+                    tISO = `${y}-${m}-${d}`;
                 }
+                const matchSales = (vSales === "" || r.cells[0].innerText.trim() === vSales);
+                const matchTgl = (vTgl === "" || tISO === vTgl);
+                const matchProd = (r.cells[3].innerText.toLowerCase().includes(vProd));
+                r.style.display = (matchSales && matchTgl && matchProd) ? "" : "none";
             });
             hitungUlang();
         }
@@ -114,7 +120,6 @@
                 lines.forEach((line, i) => {
                     if(i === 0 || line.trim() == "") return;
                     let c = line.replace(/"/g, '').split(',');
-                    if(c[1] && c[1].includes(' ')) c[1] = c[1].split(' ')[0];
                     html += `<tr>${c.map(v=>`<td>${v}</td>`).join('')}<td><button onclick="this.closest('tr').remove(); hitungUlang();">Hapus</button></td></tr>`;
                 });
                 document.getElementById('tableBody').innerHTML = html;
