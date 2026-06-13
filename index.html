@@ -17,11 +17,11 @@
         .sales-name { font-weight: 600; font-size: 12px; margin-bottom: 8px; border-bottom: 1px solid #eee; }
         .sales-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; }
         .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 15px; width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
-        th, td { padding: 8px; border: 1px solid #e2e8f0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { padding: 8px; border: 1px solid #e2e8f0; text-align: left; }
         th { background: #f1f5f9; }
         .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; border: 1px solid #e2e8f0; }
-        button { cursor: pointer; padding: 4px 8px; background: #e2e8f0; border: none; border-radius: 3px; font-size: 10px; }
+        button { cursor: pointer; padding: 5px 10px; background: #e2e8f0; border: none; border-radius: 3px; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -30,7 +30,6 @@
         <label for="fileInput" style="display:block; padding:10px; color:#cbd5e1; cursor:pointer; border: 1px dashed #cbd5e1; border-radius: 5px;">Upload Data (CSV)</label>
         <input type="file" id="fileInput" style="display:none" accept=".csv">
     </div>
-
     <div class="main">
         <div class="summary-grid">
             <div class="metric"><small>Penjualan Cash</small><strong id="tot-cash">Rp 0</strong></div>
@@ -38,13 +37,11 @@
             <div class="metric"><small>Profit Cash</small><strong id="tot-p-cash">Rp 0</strong></div>
             <div class="metric"><small>Profit Tempo</small><strong id="tot-p-tempo">Rp 0</strong></div>
         </div>
-
         <div class="sales-grid">
             <div class="sales-card"><div class="sales-name">RAJU</div><div class="sales-row"><span>Cash:</span><span id="v-RAJU-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-RAJU-tempo">0</span></div></div>
             <div class="sales-card"><div class="sales-name">HAFID</div><div class="sales-row"><span>Cash:</span><span id="v-HAFID-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-HAFID-tempo">0</span></div></div>
             <div class="sales-card"><div class="sales-name">JOSSY</div><div class="sales-row"><span>Cash:</span><span id="v-JOSSY-cash">0</span></div><div class="sales-row"><span>Tempo:</span><span id="v-JOSSY-tempo">0</span></div></div>
         </div>
-
         <div class="filter-bar">
             <input type="date" id="filterTgl">
             <select id="filterSales">
@@ -52,29 +49,55 @@
             </select>
             <button onclick="applyFilter()" style="padding: 8px 16px; background: #059669; color: white; border-radius: 4px; font-weight: bold;">Terapkan Filter</button>
         </div>
-
         <div class="table-container">
             <table id="mainTable">
-                <thead>
-                    <tr><th>Sales</th><th>Tanggal</th><th>Faktur</th><th>Produk</th><th>Jml</th><th>Satuan</th><th>H.Beli</th><th>Disc</th><th>H.Jual</th><th>Nominal</th><th>Bayar</th><th>Profit</th><th>Aksi</th></tr>
-                </thead>
+                <thead><tr><th>Sales</th><th>Tanggal</th><th>Faktur</th><th>Produk</th><th>Jml</th><th>Satuan</th><th>H.Beli</th><th>Disc</th><th>H.Jual</th><th>Nominal</th><th>Bayar</th><th>Profit</th><th>Aksi</th></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
     </div>
-
     <script>
-        function applyFilter() {
-            const vTgl = document.getElementById('filterTgl').value;
-            const vSales = document.getElementById('filterSales').value;
+        // Fungsi pembersih angka yang lebih kuat
+        function parseAngka(str) {
+            if (!str) return 0;
+            return parseFloat(str.toString().replace(/[^0-9.-]+/g, '')) || 0;
+        }
+
+        function hitungUlang() {
+            let tC=0, tT=0, tpC=0, tpT=0;
             const rows = document.querySelectorAll('#tableBody tr');
             rows.forEach(r => {
-                let p = r.cells[1].innerText.trim().split('/');
-                let tISO = p.length === 3 ? `20${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` : "";
-                const matchSales = (vSales === "" || r.cells[0].innerText.trim() === vSales);
-                const matchTgl = (vTgl === "" || tISO === vTgl);
-                r.style.display = (matchSales && matchTgl) ? "" : "none";
+                if (r.style.display === 'none') return;
+                const c = r.getElementsByTagName('td');
+                if(c.length < 12) return;
+                const n = parseAngka(c[9].innerText);
+                const p = parseAngka(c[11].innerText);
+                const isT = c[10].innerText.trim().toLowerCase() === 'kredit';
+                if(isT) { tT += n; tpT += p; } else { tC += n; tpC += p; }
             });
+            document.getElementById('tot-cash').innerText = 'Rp ' + tC.toLocaleString();
+            document.getElementById('tot-tempo').innerText = 'Rp ' + tT.toLocaleString();
+            document.getElementById('tot-p-cash').innerText = 'Rp ' + tpC.toLocaleString();
+            document.getElementById('tot-p-tempo').innerText = 'Rp ' + tpT.toLocaleString();
+        }
+
+        function editRow(b) {
+            const r = b.closest('tr');
+            if (r.contentEditable === "true") {
+                r.contentEditable = "false";
+                b.innerText = "Edit";
+                localStorage.setItem('gajahMasData', document.getElementById('tableBody').innerHTML);
+                hitungUlang();
+            } else {
+                r.contentEditable = "true";
+                b.innerText = "Simpan";
+            }
+        }
+
+        function hapusRow(b) {
+            b.closest('tr').remove();
+            localStorage.setItem('gajahMasData', document.getElementById('tableBody').innerHTML);
+            hitungUlang();
         }
 
         document.getElementById('fileInput').onchange = function(e) {
@@ -86,29 +109,21 @@
                     if(i === 0 || line.trim() == "") return;
                     let c = line.replace(/"/g, '').split(',');
                     if(c.length < 12) return;
-                    html += `<tr>${c.map(v=>`<td>${v}</td>`).join('')}<td><button onclick="editRow(this)">Edit</button><button onclick="this.closest('tr').remove()">Hapus</button></td></tr>`;
+                    html += `<tr>${c.map(v=>`<td>${v}</td>`).join('')}<td><button onclick="editRow(this)">Edit</button><button onclick="hapusRow(this)">Hapus</button></td></tr>`;
                 });
                 document.getElementById('tableBody').innerHTML = html;
                 localStorage.setItem('gajahMasData', html);
+                hitungUlang();
             };
             reader.readAsText(e.target.files[0]);
         };
 
-        function editRow(b) {
-            const r = b.closest('tr');
-            if (r.contentEditable == "true") {
-                r.contentEditable = "false";
-                b.innerText = "Edit";
-                localStorage.setItem('gajahMasData', document.getElementById('tableBody').innerHTML);
-            } else {
-                r.contentEditable = "true";
-                b.innerText = "Simpan";
-            }
-        }
-
         window.onload = () => {
             const saved = localStorage.getItem('gajahMasData');
-            if (saved) document.getElementById('tableBody').innerHTML = saved;
+            if (saved) {
+                document.getElementById('tableBody').innerHTML = saved;
+                hitungUlang();
+            }
         };
     </script>
 </body>
