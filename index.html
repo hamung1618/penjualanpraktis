@@ -9,20 +9,13 @@
         body { background: #f8fafc; display: flex; }
         .sidebar { width: 220px; height: 100vh; background: #0f172a; color: white; padding: 20px; position: fixed; }
         .main { margin-left: 220px; padding: 25px; width: calc(100% - 220px); }
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; position: relative; padding: 15px; }
-            .main { margin-left: 0; padding: 15px; width: 100%; }
-            .summary-grid, .sales-grid { grid-template-columns: 1fr !important; }
-        }
+        @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } .main { margin-left: 0; width: 100%; } .summary-grid, .sales-grid { grid-template-columns: 1fr !important; } }
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
         .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .metric, .sales-card { background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; border: 1px solid #e2e8f0; }
-        .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 10px; overflow-x: auto; }
+        .table-container { background: white; border-radius: 8px; padding: 10px; overflow-x: auto; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th, td { padding: 8px; border: 1px solid #e2e8f0; text-align: left; }
-        th { background: #f1f5f9; }
+        th, td { padding: 8px; border: 1px solid #e2e8f0; }
         button { cursor: pointer; padding: 5px 10px; background: #059669; color: white; border: none; border-radius: 3px; }
     </style>
 </head>
@@ -41,14 +34,9 @@
             <div class="metric"><small>P.Tempo</small><div id="tot-p-tempo">Rp 0</div></div>
         </div>
         <div class="sales-grid">
-            <div class="sales-card"><b>RAJU</b><div id="v-RAJU-data"></div></div>
-            <div class="sales-card"><b>HAFID</b><div id="v-HAFID-data"></div></div>
-            <div class="sales-card"><b>JOSSY</b><div id="v-JOSSY-data"></div></div>
-        </div>
-        <div class="filter-bar">
-            <input type="date" id="filterTgl">
-            <select id="filterSales"><option value="">Semua Sales</option><option value="RAJU">RAJU</option><option value="HAFID">HAFID</option><option value="JOSSY">JOSSY</option></select>
-            <button onclick="applyFilter()">Terapkan Filter</button>
+            <div class="sales-card"><b>RAJU</b><div id="v-RAJU-data">C:0 T:0 PC:0 PT:0</div></div>
+            <div class="sales-card"><b>HAFID</b><div id="v-HAFID-data">C:0 T:0 PC:0 PT:0</div></div>
+            <div class="sales-card"><b>JOSSY</b><div id="v-JOSSY-data">C:0 T:0 PC:0 PT:0</div></div>
         </div>
         <div class="table-container">
             <table id="mainTable">
@@ -59,10 +47,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // KONFIGURASI FIREBASE ANDA
         const firebaseConfig = {
             apiKey: "AIzaSyA6nSBFiYD7gsjl73vA_iW4xCGgwfrpVJY",
             authDomain: "gajahmasprofit.firebaseapp.com",
@@ -73,59 +60,39 @@
             appId: "1:786234727258:web:6a63396c202b5edb993163"
         };
 
-        const app = initializeApp(firebaseConfig);
+        const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
         const db = getDatabase(app);
 
-        // Fungsi Hitung
         window.hitung = () => {
-            let tC=0, tT=0, pc=0, pt=0;
+            let totals = { RAJU: {C:0, T:0, PC:0, PT:0}, HAFID: {C:0, T:0, PC:0, PT:0}, JOSSY: {C:0, T:0, PC:0, PT:0} };
+            let gC=0, gT=0, gPC=0, gPT=0;
             document.querySelectorAll('#tableBody tr').forEach(r => {
-                if (r.style.display === 'none') return;
                 const c = r.getElementsByTagName('td');
                 if(c.length < 12) return;
-                let n = parseFloat(c[9].innerText.replace(/[^0-9.-]+/g,'')) || 0;
-                let p = parseFloat(c[11].innerText.replace(/[^0-9.-]+/g,'')) || 0;
-                if(c[10].innerText.includes('Kredit')) { tT += n; pt += p; } else { tC += n; pc += p; }
+                const sales = c[0].innerText.trim(), n = parseFloat(c[9].innerText.replace(/[^0-9.-]+/g,''))||0, p = parseFloat(c[11].innerText.replace(/[^0-9.-]+/g,''))||0, isT = c[10].innerText.includes('Kredit');
+                if(totals[sales]) {
+                    if(isT) { totals[sales].T+=n; totals[sales].PT+=p; gT+=n; gPT+=p; } 
+                    else { totals[sales].C+=n; totals[sales].PC+=p; gC+=n; gPC+=p; }
+                }
             });
-            document.getElementById('tot-cash').innerText = 'Rp ' + tC.toLocaleString();
-            document.getElementById('tot-tempo').innerText = 'Rp ' + tT.toLocaleString();
-            document.getElementById('tot-p-cash').innerText = 'Rp ' + pc.toLocaleString();
-            document.getElementById('tot-p-tempo').innerText = 'Rp ' + pt.toLocaleString();
+            document.getElementById('tot-cash').innerText = 'Rp ' + gC.toLocaleString();
+            document.getElementById('tot-tempo').innerText = 'Rp ' + gT.toLocaleString();
+            document.getElementById('tot-p-cash').innerText = 'Rp ' + gPC.toLocaleString();
+            document.getElementById('tot-p-tempo').innerText = 'Rp ' + gPT.toLocaleString();
+            Object.keys(totals).forEach(s => document.getElementById(`v-${s}-data`).innerText = `C:${totals[s].C.toLocaleString()} T:${totals[s].T.toLocaleString()} PC:${totals[s].PC.toLocaleString()} PT:${totals[s].PT.toLocaleString()}`);
         };
 
-        // Fungsi Filter
-        window.applyFilter = () => {
-            const t = document.getElementById('filterTgl').value, s = document.getElementById('filterSales').value;
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                r.style.display = ((s==""||r.cells[0].innerText.trim()==s) && (t==""||r.cells[1].innerText.includes(t))) ? "" : "none";
-            });
-            window.hitung();
-        };
-
-        // Simpan ke Firebase
-        window.saveToCloud = () => {
-            set(ref(db, 'penjualan/data'), { html: document.getElementById('tableBody').innerHTML });
-        };
-
-        // Ambil dari Firebase
-        onValue(ref(db, 'penjualan/data'), (snapshot) => {
-            if (snapshot.val()) {
-                document.getElementById('tableBody').innerHTML = snapshot.val().html;
-                window.hitung();
-            }
-        });
-
-        // Upload CSV
+        onValue(ref(db, 'penjualan/data'), (s) => { if(s.val()) { document.getElementById('tableBody').innerHTML = s.val().html; hitung(); } });
+        window.saveToCloud = () => { set(ref(db, 'penjualan/data'), { html: document.getElementById('tableBody').innerHTML }); hitung(); };
+        
         document.getElementById('fileInput').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (evt) => {
-                const rows = evt.target.result.split('\n').slice(1);
-                document.getElementById('tableBody').innerHTML = rows.map(r => `<tr>${r.split(',').map(c => `<td>${c}</td>`).join('')}<td><button onclick="window.del(this)">Hapus</button></td></tr>`).join('');
+                document.getElementById('tableBody').innerHTML = evt.target.result.split('\n').slice(1).map(r => `<tr>${r.split(',').map(c => `<td>${c}</td>`).join('')}<td><button onclick="window.del(this)">Hapus</button></td></tr>`).join('');
                 window.saveToCloud();
             };
             reader.readAsText(e.target.files[0]);
         };
-
         window.del = (btn) => { btn.closest('tr').remove(); window.saveToCloud(); };
     </script>
 </body>
