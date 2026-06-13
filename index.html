@@ -121,5 +121,37 @@
             if(s.val()) { document.getElementById('tableBody').innerHTML = s.val().html; hitung(); } 
         });
     </script>
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA6nSBFiYD7gsjl73vA_iW4xCGgwfrpVJY",
+        authDomain: "gajahmasprofit.firebaseapp.com",
+        databaseURL: "https://gajahmasprofit-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "gajahmasprofit",
+        storageBucket: "gajahmasprofit.appspot.com",
+        messagingSenderId: "786234727258",
+        appId: "1:786234727258:web:6a63396c202b5edb993163"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // MENGAMBIL DATA (Sinkronisasi otomatis saat HP dibuka)
+    onValue(ref(db, 'penjualan/data'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            document.getElementById('tableBody').innerHTML = data.html;
+            if(typeof hitung === 'function') hitung(); // Menjalankan fungsi hitung Anda
+        }
+    });
+
+    // MENGIRIM DATA (Panggil fungsi ini setelah Anda upload/edit/hapus)
+    window.saveToCloud = () => {
+        const htmlContent = document.getElementById('tableBody').innerHTML;
+        set(ref(db, 'penjualan/data'), { html: htmlContent });
+    };
+</script>
 </body>
 </html>
