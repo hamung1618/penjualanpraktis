@@ -22,6 +22,7 @@
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th { background: #f1f5f9; padding: 10px; border: 1px solid #e2e8f0; text-align: left; }
         td { padding: 8px; border: 1px solid #e2e8f0; }
+        button { cursor: pointer; margin-right: 5px; padding: 2px 5px; background: #e2e8f0; border: none; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -72,6 +73,7 @@
             rows.forEach(row => {
                 if (row.style.display !== 'none') {
                     const c = row.getElementsByTagName('td');
+                    if(c.length < 12) return;
                     const s = c[0].innerText.trim();
                     const n = parseFloat(c[9].innerText.replace(/,/g,'')) || 0;
                     const p = parseFloat(c[11].innerText.replace(/,/g,'')) || 0;
@@ -94,22 +96,11 @@
             const vSales = document.getElementById('filterSales').value;
             const vProd = document.getElementById('filterProduk').value.toLowerCase();
             const rows = document.querySelectorAll('#tableBody tr');
-            
             rows.forEach(r => {
-                let dS = r.cells[1].innerText.trim().split(' ')[0];
-                let p = dS.split('/');
-                let tISO = "";
-                if(p.length === 3) {
-                    let d = p[0].padStart(2, '0');
-                    let m = p[1].padStart(2, '0');
-                    let y = p[2].length === 2 ? "20" + p[2] : p[2];
-                    tISO = `${y}-${m}-${d}`;
-                }
-                
-                const mSales = (vSales === "" || r.cells[0].innerText.trim() === vSales);
-                const mTgl = (vTgl === "" || tISO === vTgl);
-                const mProd = (r.cells[3].innerText.toLowerCase().includes(vProd));
-                r.style.display = (mSales && mTgl && mProd) ? "" : "none";
+                const datePart = r.cells[1].innerText.trim().split(' ')[0];
+                const pArr = datePart.split('/');
+                const tISO = pArr.length == 3 ? (pArr[2].length==2 ? "20"+pArr[2] : pArr[2]) + "-" + pArr[1].padStart(2,'0') + "-" + pArr[0].padStart(2,'0') : "";
+                r.style.display = (vSales==""||r.cells[0].innerText.trim()==vSales) && (vTgl==""||tISO==vTgl) && (r.cells[3].innerText.toLowerCase().includes(vProd)) ? "" : "none";
             });
             hitungUlang();
         }
@@ -122,7 +113,8 @@
                 lines.forEach((line, i) => {
                     if(i === 0 || line.trim() == "") return;
                     let c = line.replace(/"/g, '').split(',');
-                    html += `<tr>${c.map(v=>`<td>${v}</td>`).join('')}<td><button onclick="this.closest('tr').remove(); hitungUlang();">Hapus</button></td></tr>`;
+                    if(c.length < 12) return;
+                    html += `<tr>${c.map(v=>`<td>${v}</td>`).join('')}<td><button onclick="editRow(this)">Edit</button><button onclick="this.closest('tr').remove(); hitungUlang();">Hapus</button></td></tr>`;
                 });
                 document.getElementById('tableBody').innerHTML = html;
                 localStorage.setItem('gajahMasData', html);
@@ -130,6 +122,17 @@
             };
             reader.readAsText(e.target.files[0]);
         };
+
+        function editRow(b) {
+            const r = b.closest('tr');
+            r.contentEditable = (r.contentEditable == "true") ? "false" : "true";
+            b.innerText = (r.contentEditable == "true") ? "Simpan" : "Edit";
+            b.style.background = (r.contentEditable == "true") ? "#fbbf24" : "#e2e8f0";
+            if (r.contentEditable == "false") {
+                localStorage.setItem('gajahMasData', document.getElementById('tableBody').innerHTML);
+                hitungUlang();
+            }
+        }
 
         window.onload = () => {
             const saved = localStorage.getItem('gajahMasData');
