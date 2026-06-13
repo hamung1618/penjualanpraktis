@@ -18,11 +18,11 @@
         .sales-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; }
         .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; border: 1px solid #e2e8f0; align-items: center; }
         .btn-filter { background: #059669; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; }
-        .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 15px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th { background: #f1f5f9; padding: 10px; border: 1px solid #e2e8f0; text-align: left; }
+        .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 15px; width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: auto; }
+        th { background: #f1f5f9; padding: 10px; border: 1px solid #e2e8f0; text-align: left; white-space: nowrap; }
         td { padding: 8px; border: 1px solid #e2e8f0; }
-        button { cursor: pointer; margin-right: 5px; padding: 2px 5px; background: #e2e8f0; border: none; border-radius: 3px; }
+        button { cursor: pointer; margin-right: 5px; padding: 4px 8px; background: #e2e8f0; border: none; border-radius: 3px; font-size: 10px; }
     </style>
 </head>
 <body>
@@ -66,11 +66,7 @@
     </div>
 
     <script>
-        // Pembersih angka murni
-        function parseAngka(str) {
-            if (!str) return 0;
-            return parseFloat(str.toString().replace(/[^0-9]/g, '')) || 0;
-        }
+        function parseAngka(str) { return parseFloat(str.toString().replace(/[^0-9]/g, '')) || 0; }
 
         function hitungUlang() {
             document.querySelectorAll('[id^="v-"]').forEach(el => el.innerText = '0');
@@ -103,8 +99,7 @@
             const vProd = document.getElementById('filterProduk').value.toLowerCase();
             const rows = document.querySelectorAll('#tableBody tr');
             rows.forEach(r => {
-                const datePart = r.cells[1].innerText.trim().split(' ')[0];
-                const p = datePart.split('/');
+                const p = r.cells[1].innerText.trim().split('/');
                 const tISO = p.length == 3 ? (p[2].length==2 ? "20"+p[2] : p[2]) + "-" + p[1].padStart(2,'0') + "-" + p[0].padStart(2,'0') : "";
                 r.style.display = (vSales==""||r.cells[0].innerText.trim()==vSales) && (vTgl==""||tISO==vTgl) && (r.cells[3].innerText.toLowerCase().includes(vProd)) ? "" : "none";
             });
@@ -131,12 +126,14 @@
 
         function editRow(b) {
             const r = b.closest('tr');
-            r.contentEditable = (r.contentEditable == "true") ? "false" : "true";
-            b.innerText = (r.contentEditable == "true") ? "Simpan" : "Edit";
-            b.style.background = (r.contentEditable == "true") ? "#fbbf24" : "#e2e8f0";
-            if (r.contentEditable == "false") {
+            if (r.contentEditable == "true") {
+                r.contentEditable = "false";
+                b.innerText = "Edit";
                 localStorage.setItem('gajahMasData', document.getElementById('tableBody').innerHTML);
                 hitungUlang();
+            } else {
+                r.contentEditable = "true";
+                b.innerText = "Simpan";
             }
         }
 
