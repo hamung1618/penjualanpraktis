@@ -4,49 +4,52 @@
     <meta charset="UTF-8">
     <title>Gajah Mas Dashboard</title>
     <style>
-        body { font-family: sans-serif; display: flex; background: #f8fafc; margin: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; background: #f1f5f9; margin: 0; }
         .sidebar { width: 220px; min-height: 100vh; background: #0f172a; color: white; padding: 20px; }
-        .main { padding: 20px; width: 100%; }
-        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .metric, .sales-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .filter-bar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { padding: 8px; border: 1px solid #e2e8f0; font-size: 11px; }
-        button { cursor: pointer; padding: 4px 8px; border: none; border-radius: 3px; color: white; margin-right: 5px; }
-        .btn-edit { background: #059669; }
-        .btn-hapus { background: #dc2626; }
+        .main { padding: 25px; width: 100%; }
+        
+        /* Layout Grid */
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        
+        /* Card Styling */
+        .metric, .sales-card { background: white; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .sales-card b { display: block; margin-bottom: 12px; font-size: 16px; color: #1e293b; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+        
+        /* Perbaikan Jarak (Flexbox) */
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; color: #475569; }
+        .data-row span:last-child { font-weight: 600; color: #0f172a; }
+
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        th, td { padding: 12px; border: 1px solid #f1f5f9; font-size: 12px; }
+        th { background: #f8fafc; }
+        
+        button { cursor: pointer; padding: 5px 10px; border: none; border-radius: 4px; color: white; font-weight: bold; }
+        .btn-edit { background: #10b981; margin-right: 5px; }
+        .btn-hapus { background: #ef4444; }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div>🐘 Gajah Mas</div>
-        <label for="fileInput" style="display:block; margin-top:20px; cursor:pointer;">Upload CSV</label>
+        <div style="font-size: 20px; font-weight: bold;">🐘 Gajah Mas</div>
+        <label for="fileInput" style="display:block; margin-top:30px; cursor:pointer; background: #1e293b; padding: 10px; text-align: center; border-radius: 6px;">Upload CSV</label>
         <input type="file" id="fileInput" style="display:none" accept=".csv">
     </div>
 
     <div class="main">
         <div class="summary-grid">
-            <div class="metric"><small>Cash</small><div id="tot-cash">Rp 0</div></div>
-            <div class="metric"><small>Tempo</small><div id="tot-tempo">Rp 0</div></div>
-            <div class="metric"><small>P.Cash</small><div id="tot-p-cash">Rp 0</div></div>
-            <div class="metric"><small>P.Tempo</small><div id="tot-p-tempo">Rp 0</div></div>
+            <div class="metric"><small>Cash</small><div id="tot-cash" style="font-weight:bold; font-size: 18px;">Rp 0</div></div>
+            <div class="metric"><small>Tempo</small><div id="tot-tempo" style="font-weight:bold; font-size: 18px;">Rp 0</div></div>
+            <div class="metric"><small>P.Cash</small><div id="tot-p-cash" style="font-weight:bold; font-size: 18px;">Rp 0</div></div>
+            <div class="metric"><small>P.Tempo</small><div id="tot-p-tempo" style="font-weight:bold; font-size: 18px;">Rp 0</div></div>
         </div>
+
         <div class="sales-grid">
-            <div class="sales-card"><b>RAJU</b><div id="v-RAJU-data" style="font-size:10px;"></div></div>
-            <div class="sales-card"><b>HAFID</b><div id="v-HAFID-data" style="font-size:10px;"></div></div>
-            <div class="sales-card"><b>JOSSY</b><div id="v-JOSSY-data" style="font-size:10px;"></div></div>
+            <div class="sales-card"><b>RAJU</b><div id="v-RAJU-data"></div></div>
+            <div class="sales-card"><b>HAFID</b><div id="v-HAFID-data"></div></div>
+            <div class="sales-card"><b>JOSSY</b><div id="v-JOSSY-data"></div></div>
         </div>
-        <div class="filter-bar">
-            <input type="date" id="filterTgl">
-            <select id="filterSales">
-                <option value="">Semua Sales</option>
-                <option value="RAJU">RAJU</option>
-                <option value="HAFID">HAFID</option>
-                <option value="JOSSY">JOSSY</option>
-            </select>
-            <button onclick="applyFilter()" style="background:#3b82f6;">Terapkan Filter</button>
-        </div>
+
         <table>
             <thead><tr><th>Sales</th><th>Tanggal</th><th>Faktur</th><th>Produk</th><th>Jml</th><th>Satuan</th><th>H.Beli</th><th>Disc</th><th>H.Jual</th><th>Nominal</th><th>Bayar</th><th>Profit</th><th>Aksi</th></tr></thead>
             <tbody id="tableBody"></tbody>
@@ -70,63 +73,35 @@
         const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
         const db = getDatabase(app);
 
+        // Fungsi pembuat baris data cantik
+        const createRow = (label, value) => `<div class="data-row"><span>${label}</span><span>${value}</span></div>`;
+
         window.hitung = () => {
             let sD = { RAJU:{C:0,T:0,PC:0,PT:0}, HAFID:{C:0,T:0,PC:0,PT:0}, JOSSY:{C:0,T:0,PC:0,PT:0} };
-            let gC=0, gT=0, gPC=0, gPT=0;
             document.querySelectorAll('#tableBody tr').forEach(r => {
-                if(r.style.display === 'none') return;
                 const c = r.getElementsByTagName('td');
                 if(c.length < 12) return;
                 const s = c[0].innerText.replace(/"/g,'').trim(), n = parseFloat(c[9].innerText.replace(/[^0-9.-]+/g,''))||0, p = parseFloat(c[11].innerText.replace(/[^0-9.-]+/g,''))||0, isT = c[10].innerText.includes('Kredit');
                 if(sD[s]) { 
-                    if(isT) { sD[s].T+=n; sD[s].PT+=p; gT+=n; gPT+=p; } 
-                    else { sD[s].C+=n; sD[s].PC+=p; gC+=n; gPC+=p; } 
+                    if(isT) { sD[s].T+=n; sD[s].PT+=p; } else { sD[s].C+=n; sD[s].PC+=p; } 
                 }
             });
-            document.getElementById('tot-cash').innerText = 'Rp ' + gC.toLocaleString();
-            document.getElementById('tot-tempo').innerText = 'Rp ' + gT.toLocaleString();
-            document.getElementById('tot-p-cash').innerText = 'Rp ' + gPC.toLocaleString();
-            document.getElementById('tot-p-tempo').innerText = 'Rp ' + gPT.toLocaleString();
-            Object.keys(sD).forEach(s => document.getElementById(`v-${s}-data`).innerHTML = `Cash: ${sD[s].C.toLocaleString()}<br>Tempo: ${sD[s].T.toLocaleString()}<br>P.Cash: ${sD[s].PC.toLocaleString()}<br>P.Tempo: ${sD[s].PT.toLocaleString()}`);
-        };
-
-        window.applyFilter = () => {
-            const t = document.getElementById('filterTgl').value, s = document.getElementById('filterSales').value;
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                r.style.display = ((s==""||r.cells[0].innerText.replace(/"/g,'').trim()==s) && (t==""||r.cells[1].innerText.includes(t))) ? "" : "none";
+            Object.keys(sD).forEach(s => {
+                document.getElementById(`v-${s}-data`).innerHTML = 
+                    createRow('Cash', sD[s].C.toLocaleString()) +
+                    createRow('Tempo', sD[s].T.toLocaleString()) +
+                    createRow('P.Cash', sD[s].PC.toLocaleString()) +
+                    createRow('P.Tempo', sD[s].PT.toLocaleString());
             });
-            hitung();
         };
 
         onValue(ref(db, 'penjualan/data'), (s) => { 
-            if(s.val()) { 
-                // Membersihkan tanda petik saat dimuat dari database
-                document.getElementById('tableBody').innerHTML = s.val().html.replace(/"/g, ''); 
-                hitung(); 
-            } 
+            if(s.val()) { document.getElementById('tableBody').innerHTML = s.val().html.replace(/"/g, ''); hitung(); } 
         });
 
-        window.saveToCloud = () => { 
-            // Membersihkan tanda petik sebelum disimpan
-            set(ref(db, 'penjualan/data'), { html: document.getElementById('tableBody').innerHTML.replace(/"/g, '') }); 
-            hitung(); 
-        };
-        
-        window.edit = (btn) => {
-            const r = btn.closest('tr');
-            if(r.contentEditable === "true") { r.contentEditable = "false"; btn.innerText = "Edit"; saveToCloud(); }
-            else { r.contentEditable = "true"; btn.innerText = "Simpan"; }
-        };
+        window.saveToCloud = () => { set(ref(db, 'penjualan/data'), { html: document.getElementById('tableBody').innerHTML }); hitung(); };
+        window.edit = (btn) => { const r = btn.closest('tr'); r.contentEditable = (r.contentEditable !== "true"); btn.innerText = (r.contentEditable === "true") ? "Simpan" : "Edit"; if(r.contentEditable === "false") saveToCloud(); };
         window.del = (btn) => { btn.closest('tr').remove(); saveToCloud(); };
-
-        document.getElementById('fileInput').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                document.getElementById('tableBody').innerHTML = evt.target.result.split('\n').slice(1).filter(l=>l).map(r => `<tr>${r.split(',').map(c => `<td>${c.replace(/"/g,'')}</td>`).join('')}<td><button class="btn-edit" onclick="window.edit(this)">Edit</button><button class="btn-hapus" onclick="window.del(this)">Hapus</button></td></tr>`).join('');
-                saveToCloud();
-            };
-            reader.readAsText(e.target.files[0]);
-        };
     </script>
 </body>
 </html>
